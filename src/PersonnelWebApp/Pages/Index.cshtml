@@ -1,10 +1,26 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Login";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col"></div>
+        <div class="col-md-auto">
+            <div><p class="text-danger">@Model.Message</p></div>
+            <form method="post">
+                <div class="mb-3">
+                    <input asp-for="UserName" class="form-control" placeholder="username">
+                </div>
+                <div class="mb-3">
+                    <input asp-for="Password" class="form-control" placeholder="password">
+                </div>
+                <div class="text-center">
+                    <button type="submit" class="btn btn-primary mb-3">Login</button>
+                </div>
+            </form>
+        </div>
+        <div class="col"></div>
+    </div>
 </div>
