@@ -43,4 +43,15 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 
+var personnelCollection = app.Services.GetRequiredService<IMongoCollection<Personnel>>();
+if (personnelCollection.CountDocuments(FilterDefinition<Personnel>.Empty) == 0)
+{
+    var passwordHasher = app.Services.GetRequiredService<IPasswordHasher<string>>();
+    personnelCollection.InsertOne(new Personnel
+                                      {
+                                          UserName = "admin",
+                                          Password = passwordHasher.HashPassword("admin", "admin")
+                                      });
+}
+
 app.Run();
