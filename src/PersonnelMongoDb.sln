@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.7.34018.315
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonnelWebApp", "PersonnelWebApp\PersonnelWebApp.csproj", "{B47A4E3C-0EAB-4A0D-AFCB-D8B647C390BA}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PersonnelWebApp", "PersonnelWebApp\PersonnelWebApp.csproj", "{B47A4E3C-0EAB-4A0D-AFCB-D8B647C390BA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

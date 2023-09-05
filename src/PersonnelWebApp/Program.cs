@@ -9,7 +9,11 @@ using PersonnelWebApp.Infrastructure.Service;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options =>
+    {
+        options.Conventions.AuthorizeFolder("/");
+        options.Conventions.AllowAnonymousToPage("/Login");
+    });
 
 var mongoUrl = MongoUrl.Create(builder.Configuration.GetConnectionString("PersonnelDb"));
 
@@ -28,7 +32,7 @@ builder.Services.Configure<CookiePolicyOptions>(
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(
     cookieOptions =>
         {
-            cookieOptions.LoginPath = "/";
+            cookieOptions.LoginPath = "/Login";
         });
 
 var app = builder.Build();
