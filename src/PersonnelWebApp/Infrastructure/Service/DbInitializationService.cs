@@ -13,21 +13,21 @@ public interface IDbInitializationService
 
 public sealed class DbInitializationService : IDbInitializationService
 {
-    private readonly IMongoCollection<Personnel> _personnelCollection;
+    private readonly IMongoCollection<Personnel> _mongoPersonnelCollection;
 
     private readonly IPasswordHasher<string> _passwordHasher;
 
-    public DbInitializationService(IMongoCollection<Personnel> personnelCollection, IPasswordHasher<string> passwordHasher)
+    public DbInitializationService(IMongoCollection<Personnel> mongoPersonnelCollection, IPasswordHasher<string> passwordHasher)
     {
-        _personnelCollection = personnelCollection ?? throw new ArgumentNullException(nameof(personnelCollection));
+        _mongoPersonnelCollection = mongoPersonnelCollection ?? throw new ArgumentNullException(nameof(mongoPersonnelCollection));
         _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
     }
 
     public void InitDb()
     {
-        if (_personnelCollection.CountDocuments(FilterDefinition<Personnel>.Empty) == 0)
+        if (_mongoPersonnelCollection.CountDocuments(FilterDefinition<Personnel>.Empty) == 0)
         {
-            _personnelCollection.InsertOne(new Personnel
+            _mongoPersonnelCollection.InsertOne(new Personnel
                                               {
                                                   UserName = "admin",
                                                   Password = _passwordHasher.HashPassword("admin", "admin")

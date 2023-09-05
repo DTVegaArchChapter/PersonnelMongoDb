@@ -8,18 +8,13 @@ using System.Security.Claims;
 
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Identity;
 
-using MongoDB.Driver;
-
-using PersonnelWebApp.Infrastructure.Model;
+using PersonnelWebApp.Infrastructure.Service;
 
 [AllowAnonymous]
 public class IndexModel : PageModel
 {
-    private readonly IMongoCollection<Personnel> _mongoPersonnelCollection;
-
-    private readonly IPasswordHasher<string> _passwordHasher;
+    private readonly IUserService _userService;
 
     [BindProperty]
     public string UserName { get; set; }
@@ -29,24 +24,17 @@ public class IndexModel : PageModel
 
     public string Message { get; set; }
 
-    public IndexModel(IMongoCollection<Personnel> mongoPersonnelCollection, IPasswordHasher<string> passwordHasher)
+    public IndexModel(IUserService userService)
     {
-        _mongoPersonnelCollection = mongoPersonnelCollection ?? throw new ArgumentNullException(nameof(mongoPersonnelCollection));
-        _passwordHasher = passwordHasher ?? throw new ArgumentNullException(nameof(passwordHasher));
+        _userService = userService ?? throw new ArgumentNullException(nameof(userService));
     }
 
     public async Task<IActionResult> OnPost()
     {
-        var personnel =_mongoPersonnelCollection.AsQueryable().Where(x => x.UserName == UserName).Select(x => new { x.UserName, x.Password }).SingleOrDefault();
-        if (personnel == null)
+        var (message, success) = _userService.LoginUser(UserName, Password);
+        if (!success)
         {
-            Message = "User not found";
-            return Page();
-        }
-
-        if (_passwordHasher.VerifyHashedPassword(UserName, personnel.Password, Password) == PasswordVerificationResult.Failed)
-        {
-            Message = "Invalid password";
+            Message = message;
             return Page();
         }
 
