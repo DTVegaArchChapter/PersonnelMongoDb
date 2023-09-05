@@ -26,6 +26,16 @@
                             <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
                         </li>
                     </ul>
+                    <div class="d-flex align-items-center">
+                        @if (Context.User.Identity?.IsAuthenticated == true)
+                        {
+                            <a class="nav-link text-dark px-3 me-2" asp-area="" asp-page="/Login" asp-page-handler="Logout">Logout</a>
+                        }
+                        else
+                        {
+                            <a class="nav-link text-dark px-3 me-2" asp-area="" asp-page="/Login">Login</a>
+                        }
+                    </div>
                 </div>
             </div>
         </nav>
