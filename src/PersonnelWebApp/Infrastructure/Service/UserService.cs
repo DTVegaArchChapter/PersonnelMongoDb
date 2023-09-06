@@ -25,7 +25,7 @@ public sealed class UserService : IUserService
 
     public (string, bool) LoginUser(string userName, string password)
     {
-        var personnel = _mongoPersonnelCollection.AsQueryable().Where(x => x.UserName == userName).Select(x => new { x.UserName, x.Password }).SingleOrDefault();
+        var personnel = _mongoPersonnelCollection.AsQueryable().Where(x => x.UserName == userName).Select(x => new { x.UserName, x.Password, x.IsDeleted }).SingleOrDefault();
         if (personnel == null)
         {
             return ("User not found", false);
@@ -34,6 +34,11 @@ public sealed class UserService : IUserService
         if (_passwordHasher.VerifyHashedPassword(userName, personnel.Password, password) == PasswordVerificationResult.Failed)
         {
             return ("Invalid password", false);
+        }
+
+        if (personnel.IsDeleted)
+        {
+            return ("User is not active", false);
         }
 
         return (string.Empty, true);
