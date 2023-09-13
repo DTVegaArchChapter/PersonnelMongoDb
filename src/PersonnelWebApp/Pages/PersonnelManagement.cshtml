@@ -6,6 +6,8 @@
 
 <h2>Personnel Management</h2>
 
+<a class="btn btn-primary" asp-page="./AddOrUpdatePersonnel">Add New Personnel</a>
+
 <table class="table table-striped">
     <tr>
         <th>ID</th>
@@ -18,8 +20,7 @@
             <td>@item.Id</td>
             <td>@item.UserName</td>
             <td>
-                <a asp-page="./Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-page="./Details" asp-route-id="@item.Id">Details</a> |
+                <a asp-page="./AddOrUpdatePersonnel" asp-route-id="@item.Id">Edit</a> |
                 <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
             </td>
         </tr>

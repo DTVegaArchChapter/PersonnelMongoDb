@@ -11,6 +11,8 @@ public interface IUserService
     (string, bool) LoginUser(string userName, string password);
     IList<Personnel> GetPersonnelList(int pageNumber, int pageSize);
     int GetCount();
+    Personnel GetPersonnel(string id);
+    Task AddOrUpdatePersonnel(Personnel personnel);
 }
 
 public sealed class UserService : IUserService
@@ -51,5 +53,28 @@ public sealed class UserService : IUserService
     public int GetCount()
     {
         return _mongoPersonnelCollection.AsQueryable().Count();
+    }
+
+    public Personnel GetPersonnel(string id)
+    {
+        return _mongoPersonnelCollection.AsQueryable().FirstOrDefault(x => x.Id == id);
+    }
+
+    public async Task AddOrUpdatePersonnel(Personnel personnel)
+    {
+        personnel.Password = _passwordHasher.HashPassword(personnel.UserName, personnel.Password);
+
+        if (!_mongoPersonnelCollection.AsQueryable().Any(x => x.UserName == personnel.UserName))
+        {
+            if (string.IsNullOrWhiteSpace(personnel.Id))
+            {
+
+                await _mongoPersonnelCollection.InsertOneAsync(personnel);
+            }
+            else
+            {
+                await _mongoPersonnelCollection.ReplaceOneAsync(x => x.Id == personnel.Id, personnel);
+            }
+        }
     }
 }
