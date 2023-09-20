@@ -2,13 +2,9 @@ namespace PersonnelWebApp.Pages;
 
 using PersonnelWebApp.Infrastructure.Service;
 
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
-using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
 using PersonnelWebApp.Infrastructure.Model;
 
 public class PersonnelManagementModel : PageModel

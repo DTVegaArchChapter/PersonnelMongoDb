@@ -30,7 +30,8 @@ public sealed class DbInitializationService : IDbInitializationService
             _mongoPersonnelCollection.InsertOne(new Personnel
                                               {
                                                   UserName = "admin",
-                                                  Password = _passwordHasher.HashPassword("admin", "admin")
+                                                  Password = _passwordHasher.HashPassword("admin", "admin"),
+                                                  EntryExitHours = new List<EntryExitHour>()
                                               });
         }
     }

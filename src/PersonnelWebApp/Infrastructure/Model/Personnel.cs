@@ -12,5 +12,8 @@ public sealed class Personnel
     public string UserName { get; set; }
 
     public string Password { get; set; }
+
     public IList<Vacation> Vacations { get; set; }
+
+    public IList<EntryExitHour> EntryExitHours { get; set; }
 }
