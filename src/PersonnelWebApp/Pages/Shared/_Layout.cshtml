@@ -25,6 +25,12 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-page="/Privacy">Privacy</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/PersonnelManagement">Personnel Management</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-area="" asp-page="/Vacation">Vacation</a>
+                        </li>
                     </ul>
                     <div class="d-flex align-items-center">
                         @if (Context.User.Identity?.IsAuthenticated == true)

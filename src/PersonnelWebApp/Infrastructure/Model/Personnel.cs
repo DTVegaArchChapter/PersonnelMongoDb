@@ -14,4 +14,8 @@ public sealed class Personnel
     public string Password { get; set; }
 
     public bool IsDeleted { get; set; }
+
+    public IList<Vacation> Vacations { get; set; }
+
+    public IList<EntryExitHour> EntryExitHours { get; set; }
 }

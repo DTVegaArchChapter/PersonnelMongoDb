@@ -1,0 +1,56 @@
+﻿@page
+@model PersonnelWebApp.Pages.VacationModel
+@{
+    <div class="container mt-4">
+        <h1>Vacation Page</h1>
+
+        <form method="post">
+            <div class="mb-3 col-6">
+                <label for="StartDate" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="StartDate" name="Vacation.StartDate" asp-for="Vacation.StartDate">
+            </div>
+            <div class="mb-3 col-6">
+                <label for="EndDate" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="EndDate" name="Vacation.EndDate" asp-for="Vacation.EndDate">
+            </div>
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+
+        <hr>
+
+        <h2>Vacation List</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var vacation in Model.Data)
+                {
+                    <tr>
+                        <td>@vacation.StartDate.ToShortDateString()</td>
+                        <td>@vacation.EndDate.ToShortDateString()</td>
+                        <td>
+                            <a class="btn btn-danger"
+                               onclick="return confirm('Are you sure you want to delete this vacation?');"
+                               asp-page-handler="Delete" asp-route-id="@vacation.Id">Delete</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <nav aria-label="Page navigation">
+            <ul class="pagination">
+                @for (int i = 1; i <= Model.TotalPages; i++)
+                {
+                    <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                        <a class="page-link" href="?CurrentPage=@i">@i</a>
+                    </li>
+                }
+            </ul>
+        </nav>
+    </div>
+}

@@ -23,6 +23,7 @@ builder.Services.AddSingleton(x => x.GetRequiredService<IMongoDatabase>().GetCol
 builder.Services.AddSingleton<IPasswordHasher<string>>(_ => new PasswordHasher<string>());
 builder.Services.AddSingleton<IDbInitializationService, DbInitializationService>();
 builder.Services.AddSingleton<IUserService, UserService>();
+builder.Services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
 
 builder.Services.Configure<CookiePolicyOptions>(
     options =>

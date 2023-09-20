@@ -1,0 +1,38 @@
+﻿@page
+@model PersonnelManagementModel
+@{
+    ViewData["Title"] = "Personnel Management";
+}
+
+<h2>Personnel Management</h2>
+
+<a class="btn btn-primary" asp-page="./AddOrUpdatePersonnel">Add New Personnel</a>
+
+<table class="table table-striped">
+    <tr>
+        <th>ID</th>
+        <th>User Name</th>
+        <th>Operations</th>
+    </tr>
+    @foreach (var item in Model.Data)
+    {
+        <tr>
+            <td>@item.Id</td>
+            <td>@item.UserName</td>
+            <td>
+                <a asp-page="./AddOrUpdatePersonnel" asp-route-id="@item.Id">Edit</a> |
+                <a asp-page="./Delete" asp-route-id="@item.Id">Delete</a>
+            </td>
+        </tr>
+    }
+</table>
+<div>
+    <ul class="pagination">
+        @for (var i = 1; i <= Model.TotalPages; i++)
+        {
+            <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                <a asp-page="/pagination" asp-route-currentpage="@i" class="page-link">@i</a>
+            </li>
+        }
+    </ul>
+</div>

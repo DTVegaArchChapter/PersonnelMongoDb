@@ -36,7 +36,7 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnPostAsync(string returnUrl)
     {
-        var (message, success) = _userService.LoginUser(UserName, Password);
+        var (message, success) = await _userService.LoginUser(UserName, Password);
         if (!success)
         {
             Message = message;
