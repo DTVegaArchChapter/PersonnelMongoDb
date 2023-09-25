@@ -1,0 +1,45 @@
+﻿@page
+@model PersonnelWebApp.Pages.UserEntryExitDurationsModel
+@{
+    var list = Model.UserEntryExitDurations.SelectMany(m => m.EntryExitDurations, (m, EntryExitDurations) => new
+    {
+        m.UserName,
+        EntryExitDurations
+    }).GroupBy(m => m.EntryExitDurations.EntryDate).Select(m => new
+    {
+        EntryDate = m.Key,
+        UserName = m.First().UserName,
+        Shift = m.First(x => x.EntryExitDurations.ReasonType == 1).EntryExitDurations.TotalMinutes,
+        Meal = m.First(x => x.EntryExitDurations.ReasonType == 2).EntryExitDurations.TotalMinutes,
+        Break = m.First(x => x.EntryExitDurations.ReasonType == 3).EntryExitDurations.TotalMinutes,
+    });
+}
+
+<div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>User Name</th>
+                <th>Shift</th>
+                <th>Meal</th>
+                <th>Break</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var item in list)
+            {
+                <tr>
+                    <td>@item.EntryDate</td>
+                    <td>@item.UserName</td>
+                    <td>@TimeSpan.FromMinutes(item.Shift).ToString(@"hh\:mm")</td>
+                    <td>@TimeSpan.FromMinutes(item.Meal).ToString(@"hh\:mm")</td>
+                    <td>@TimeSpan.FromMinutes(item.Break).ToString(@"hh\:mm")</td>
+
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

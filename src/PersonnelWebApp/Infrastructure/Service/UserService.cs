@@ -1,12 +1,14 @@
 ﻿namespace PersonnelWebApp.Infrastructure.Service;
 
-using PersonnelWebApp.Infrastructure.Model;
-
-using MongoDB.Driver;
-
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
+using MongoDB.Driver;
+using MongoDB.Driver.Linq;
+using PersonnelWebApp.Infrastructure.Dtos;
+using PersonnelWebApp.Infrastructure.Model;
 using System;
+using System.Text.Json;
 
 public interface IUserService
 {
@@ -18,6 +20,7 @@ public interface IUserService
     Task AddPersonnelVacation(Vacation vacation, string userName);
     (IEnumerable<Vacation> Data, int Count) GetUserVacations(int pageNumber, int pageSize, string userName);
     Task DeletePersonnelVacation(string userName, string vacationId);
+    Task<IEnumerable<GetUserEntryExitDurationsResponseDto>> GetUserEntryExitDurationsAsync(GetUserEntryExitDurationsRequestDto request);
 }
 
 public sealed class UserService : IUserService
@@ -167,15 +170,118 @@ public sealed class UserService : IUserService
         }
     }
 
+    public async Task<IEnumerable<GetUserEntryExitDurationsResponseDto>> GetUserEntryExitDurationsAsync(GetUserEntryExitDurationsRequestDto request)
+    {
+        //var data = _mongoPersonnelCollection.AsQueryable()
+        //    .SelectMany(m => m.EntryExitHours, (m, EntryExitHours) => new
+        //    {
+        //        m.UserName,
+        //        EntryExitHours
+        //    })
+        //    .Where(m => m.EntryExitHours.EntryDate >= beginDate.Date && m.EntryExitHours.ExitDate <= endDate.Date)
+        //    .GroupBy(m => new
+        //    {
+        //        m.UserName,
+        //        m.EntryExitHours.ReasonType,
+        //        EntryDate = m.EntryExitHours.EntryDate.ToString("yyyy-mm-dd")
+        //    })
+        //    .Select(m => new
+        //    {
+        //        TotalMinutes = m.Sum(x => (x.EntryExitHours.ExitDate - x.EntryExitHours.EntryDate).Minutes)
+        //    })
+        //    .ToList();
+
+
+        var pipeline = new List<BsonDocument>()
+        {
+            new BsonDocument("$unwind", new BsonDocument
+            {
+                { "path", "$EntryExitHours" }
+            }),
+
+            new BsonDocument("$match", new BsonDocument
+            {
+                { "EntryExitHours.EntryDate", new BsonDocument { 
+                    { "$gte", request.BeginDate.Date }, { "$lt", request.EndDate.Date } 
+                } }
+            }),
+
+            new BsonDocument("$group", new BsonDocument {
+                { "_id", new BsonDocument
+                    {
+                        { "_id", "$_id" },
+                        { "UserName", "$UserName" },
+                        { "ReasonType", "$EntryExitHours.ReasonType" },
+                        { "EntryDate",  new BsonDocument {
+                            { "$dateToString", new BsonDocument { 
+                                { "format", "%Y-%m-%d" }, { "date", "$EntryExitHours.EntryDate" }
+                            } }
+                        } },
+                    }
+                },
+                { "TotalMinutes", new BsonDocument {
+                    { "$sum", new BsonDocument {
+                        { "$dateDiff", new BsonDocument { 
+                            { "startDate", "$EntryExitHours.EntryDate" },
+                            { "endDate", "$EntryExitHours.ExitDate" },
+                            { "unit", "minute" }
+                        } }
+                    } }
+                } }
+            }),
+
+            new BsonDocument("$group", new BsonDocument { 
+                { "_id", "$_id._id" },
+                { "UserName", new BsonDocument { { "$first", "$_id.UserName" } } },
+                { "EntryExitDurations", new BsonDocument { 
+                    { "$push", new BsonDocument { 
+                        { "EntryDate", "$_id.EntryDate" },
+                        { "ReasonType", "$_id.ReasonType" },
+                        { "TotalMinutes", "$TotalMinutes" },
+                    } } 
+                } },
+            }),
+
+            new BsonDocument("$project", new BsonDocument
+            {
+                { "_id", "$_id" },
+                { "UserName", "$UserName" },
+                { "EntryExitDurations", new BsonDocument { 
+                    { "$sortArray", new BsonDocument { 
+                        { "input", "$EntryExitDurations" },
+                        { "sortBy", new BsonDocument { 
+                            { "EntryDate", -1 },
+                            { "ReasonType", 1 },
+                        } }
+                    } } 
+                } },
+            }),
+
+            new BsonDocument("$sort", new BsonDocument
+            {
+                { "UserName", 1 }
+            }),
+        };
+
+        var result = await _mongoPersonnelCollection
+            .Aggregate((PipelineDefinition<Personnel, GetUserEntryExitDurationsResponseDto>)pipeline)
+            .ToListAsync();
+
+
+        return result;
+    }
+
     private async Task AddPersonnelEntryExitWorkHour(string personnelId)
     {
         var filter = Builders<Personnel>.Filter.Eq(x => x.Id, personnelId);
         var update = Builders<Personnel>.Update.Push(
             x => x.EntryExitHours,
             new EntryExitHour
-                {
-                    Id = ObjectId.GenerateNewId().ToString(), ReasonType = Constant.PersonnelExitReasonType.WorkHour, EntryDate = _dateTimeProvider.GetUtcNow()
-                });
+            {
+                Id = ObjectId.GenerateNewId().ToString(),
+                ReasonType = Constant.PersonnelExitReasonType.WorkHour,
+                EntryDate = _dateTimeProvider.GetUtcNow()
+            });
 
         await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
     }
