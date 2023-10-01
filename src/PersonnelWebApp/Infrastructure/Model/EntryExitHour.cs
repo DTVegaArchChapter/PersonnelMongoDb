@@ -15,5 +15,7 @@ public sealed class EntryExitHour
 
     public DateTime ExitDate { get; set; }
 
+    public DateTime CreateDate { get; set; }
+
     public bool IsDeleted { get; set; }
 }

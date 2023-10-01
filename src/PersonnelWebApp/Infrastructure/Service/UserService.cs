@@ -2,13 +2,11 @@
 
 using Microsoft.AspNetCore.Identity;
 using MongoDB.Bson;
-using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using MongoDB.Driver.Linq;
 using PersonnelWebApp.Infrastructure.Dtos;
 using PersonnelWebApp.Infrastructure.Model;
 using System;
-using System.Text.Json;
 
 public interface IUserService
 {
@@ -149,24 +147,36 @@ public sealed class UserService : IUserService
 
     public async Task AddPersonnelEntryExitHours(string personnelId)
     {
-        var lastEntryExitHours = _mongoPersonnelCollection.AsQueryable()
-            .SelectMany(x => x.EntryExitHours).FirstOrDefault(x => x.EntryDate.Date == _dateTimeProvider.GetUtcNow().Date && x.IsDeleted == false);
-
-        if (lastEntryExitHours != null)
+        var entryExitHours = _mongoPersonnelCollection.AsQueryable()
+            .SelectMany(x => x.EntryExitHours);
+        if (!await IAsyncCursorSourceExtensions.AnyAsync(entryExitHours))
         {
-            if (lastEntryExitHours.ReasonType != Constant.PersonnelExitReasonType.WorkHour)
-            {
-                //TODO: Burcu - Close Meal Or Break Entry Exit Record
-                //var filter = Builders<Personnel>.Filter.Where(x => x.Id == personnelId && x.EntryExitHours.Any(y => y.Id == lastEntryExitHours.Id));
-                //var update = Builders<Personnel>.Update.Set(x => x.EntryExitHours[x.EntryExitHours.Count - 1].EntryDate, _dateTimeProvider.GetUtcNow()).Set(x => x.EntryExitHours[x.EntryExitHours.Count - 1].IsDeleted, true);
+            var filter = Builders<Personnel>.Filter.Eq(x => x.Id, personnelId);
+            var update = Builders<Personnel>.Update.Set(
+                x => x.EntryExitHours,
+                new List<EntryExitHour>());
 
-                //await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
-                //await AddPersonnelEntryExitWorkHour(personnelId);
-            }
+            await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
+            await AddPersonnelEntryExitWorkHour(personnelId);
         }
         else
         {
-            await AddPersonnelEntryExitWorkHour(personnelId);
+            var lastEntryExitHours = entryExitHours.Where(x => (x.EntryDate.Date == _dateTimeProvider.GetUtcNow().Date || x.ExitDate.Date == _dateTimeProvider.GetUtcNow().Date) && x.IsDeleted == false).OrderByDescending(x => x.CreateDate).FirstOrDefault();
+
+            if (lastEntryExitHours != null)
+            {
+                if (lastEntryExitHours.ReasonType != Constant.PersonnelExitReasonType.WorkHour)
+                {
+                    var filter = Builders<Personnel>.Filter.Where(x => x.Id == personnelId && x.EntryExitHours.Any(y => y.Id == lastEntryExitHours.Id));
+                    var update = Builders<Personnel>.Update.Set("EntryExitHours.$.EntryDate", _dateTimeProvider.GetUtcNow()).Set("EntryExitHours.$.IsDeleted", true);
+
+                    await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
+                }
+            }
+            else
+            {
+                await AddPersonnelEntryExitWorkHour(personnelId);
+            }
         }
     }
 
@@ -280,7 +290,8 @@ public sealed class UserService : IUserService
             {
                 Id = ObjectId.GenerateNewId().ToString(),
                 ReasonType = Constant.PersonnelExitReasonType.WorkHour,
-                EntryDate = _dateTimeProvider.GetUtcNow()
+                EntryDate = _dateTimeProvider.GetUtcNow(),
+                CreateDate = _dateTimeProvider.GetUtcNow()
             });
 
         await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
