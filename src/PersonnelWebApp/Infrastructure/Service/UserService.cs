@@ -104,7 +104,15 @@ public sealed class UserService : IUserService
             }
             else
             {
-                await _mongoPersonnelCollection.ReplaceOneAsync(x => x.Id == personnel.Id, personnel);
+                var filter = Builders<Personnel>.Filter.Eq(p => p.Id, personnel.Id);
+
+                var update = Builders<Personnel>.Update
+                    .Set(p => p.UserName, personnel.UserName)
+                    .Set(p => p.Password, personnel.Password);
+
+                var options = new UpdateOptions { IsUpsert = true };
+
+                await _mongoPersonnelCollection.UpdateOneAsync(filter, update, options);
             }
         }
     }
