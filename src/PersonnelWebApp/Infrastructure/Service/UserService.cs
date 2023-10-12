@@ -147,36 +147,21 @@ public sealed class UserService : IUserService
 
     public async Task AddPersonnelEntryExitHours(string personnelId)
     {
-        var entryExitHours = _mongoPersonnelCollection.AsQueryable()
-            .SelectMany(x => x.EntryExitHours);
-        if (!await IAsyncCursorSourceExtensions.AnyAsync(entryExitHours))
-        {
-            var filter = Builders<Personnel>.Filter.Eq(x => x.Id, personnelId);
-            var update = Builders<Personnel>.Update.Set(
-                x => x.EntryExitHours,
-                new List<EntryExitHour>());
+        var lastEntryExitHours = _mongoPersonnelCollection.AsQueryable().Where(x => x.Id == personnelId).SelectMany(x => x.EntryExitHours).Where(x => (x.EntryDate.Date == _dateTimeProvider.GetUtcNow().Date || x.ExitDate.Date == _dateTimeProvider.GetUtcNow().Date) && x.IsDeleted == false).OrderByDescending(x => x.CreateDate).FirstOrDefault();
 
-            await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
-            await AddPersonnelEntryExitWorkHour(personnelId);
+        if (lastEntryExitHours != null) 
+        {
+            if (lastEntryExitHours.ReasonType != Constant.PersonnelExitReasonType.WorkHour)
+            {
+                var filter = Builders<Personnel>.Filter.Where(x => x.Id == personnelId && x.EntryExitHours.Any(y => y.Id == lastEntryExitHours.Id));
+                var update = Builders<Personnel>.Update.Set("EntryExitHours.$.EntryDate", _dateTimeProvider.GetUtcNow());
+
+                await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
+            }
         }
         else
         {
-            var lastEntryExitHours = entryExitHours.Where(x => (x.EntryDate.Date == _dateTimeProvider.GetUtcNow().Date || x.ExitDate.Date == _dateTimeProvider.GetUtcNow().Date) && x.IsDeleted == false).OrderByDescending(x => x.CreateDate).FirstOrDefault();
-
-            if (lastEntryExitHours != null)
-            {
-                if (lastEntryExitHours.ReasonType != Constant.PersonnelExitReasonType.WorkHour)
-                {
-                    var filter = Builders<Personnel>.Filter.Where(x => x.Id == personnelId && x.EntryExitHours.Any(y => y.Id == lastEntryExitHours.Id));
-                    var update = Builders<Personnel>.Update.Set("EntryExitHours.$.EntryDate", _dateTimeProvider.GetUtcNow()).Set("EntryExitHours.$.IsDeleted", true);
-
-                    await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
-                }
-            }
-            else
-            {
-                await AddPersonnelEntryExitWorkHour(personnelId);
-            }
+            await AddPersonnelEntryExitWorkHour(personnelId);
         }
     }
 

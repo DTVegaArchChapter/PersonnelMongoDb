@@ -15,7 +15,7 @@ public sealed class Personnel
 
     public bool IsDeleted { get; set; }
 
-    public IList<Vacation> Vacations { get; set; }
+    public IList<Vacation> Vacations { get; set; } = new List<Vacation>();
 
-    public IList<EntryExitHour> EntryExitHours { get; set; }
+    public IList<EntryExitHour> EntryExitHours { get; set; } = new List<EntryExitHour>();
 }
