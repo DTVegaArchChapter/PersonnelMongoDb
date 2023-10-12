@@ -29,6 +29,13 @@ public class LoginModel : PageModel
 
     public async Task<IActionResult> OnGetLogoutAsync()
     {
+        var (message, success) = await _userService.LogoutUser("650aafe1483a687ade1a3286"); // TODO : get user Id from session
+        if (!success)
+        {
+            Message = message;
+            return Page();
+        }
+
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
         return Redirect("/");

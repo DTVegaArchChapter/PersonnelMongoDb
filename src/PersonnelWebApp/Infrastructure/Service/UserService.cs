@@ -19,6 +19,8 @@ public interface IUserService
     (IEnumerable<Vacation> Data, int Count) GetUserVacations(int pageNumber, int pageSize, string userName);
     Task DeletePersonnelVacation(string userName, string vacationId);
     Task<IEnumerable<GetUserEntryExitDurationsResponseDto>> GetUserEntryExitDurationsAsync(GetUserEntryExitDurationsRequestDto request);
+
+    Task<(string, bool)> LogoutUser(string personnelId);
 }
 
 public sealed class UserService : IUserService
@@ -102,7 +104,15 @@ public sealed class UserService : IUserService
             }
             else
             {
-                await _mongoPersonnelCollection.ReplaceOneAsync(x => x.Id == personnel.Id, personnel);
+                var filter = Builders<Personnel>.Filter.Eq(p => p.Id, personnel.Id);
+
+                var update = Builders<Personnel>.Update
+                    .Set(p => p.UserName, personnel.UserName)
+                    .Set(p => p.Password, personnel.Password);
+
+                var options = new UpdateOptions { IsUpsert = true };
+
+                await _mongoPersonnelCollection.UpdateOneAsync(filter, update, options);
             }
         }
     }
@@ -264,6 +274,21 @@ public sealed class UserService : IUserService
 
 
         return result;
+    }
+
+    public async Task<(string, bool)> LogoutUser(string personnelId)
+    {
+        var entryExitHours = _mongoPersonnelCollection.AsQueryable()
+            .SelectMany(x => x.EntryExitHours);
+
+        var lastEntryExitHours = entryExitHours.Where(x => (x.EntryDate.Date == _dateTimeProvider.GetUtcNow().Date && x.ExitDate.Date == DateTime.MinValue.Date) && x.IsDeleted == false).OrderByDescending(x => x.CreateDate).FirstOrDefault();
+
+        var filter = Builders<Personnel>.Filter.Where(x => x.Id == personnelId && x.EntryExitHours.Any(y => y.Id == lastEntryExitHours.Id));
+        var update = Builders<Personnel>.Update.Set("EntryExitHours.$.ExitDate", _dateTimeProvider.GetUtcNow()).Set("EntryExitHours.$.IsDeleted", true);
+
+        await _mongoPersonnelCollection.UpdateOneAsync(filter, update);
+        
+        return (string.Empty, true);
     }
 
     private async Task AddPersonnelEntryExitWorkHour(string personnelId)
